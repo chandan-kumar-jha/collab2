@@ -1,8 +1,10 @@
 import axios from "axios"
 
 const axiosInstance = axios.create({
-    baseURL:import.meta.env.VITE_API_URL,
+    baseURL:"https://collab2-1.onrender.com/api",
     withCredentials:true
 })
+
+console.log("")
 
 export default axiosInstance
