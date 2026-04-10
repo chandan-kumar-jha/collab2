@@ -9,7 +9,9 @@ if(!apiKey || !apiSecret){
     console.log("STREAM_API_KEY or STREAM_API_SECRET")
 }
 
-export const streamClient = new StreamClient(apiKey, apiSecret)
+export const streamClient = new StreamClient(apiKey, apiSecret, {
+  timeout: 10000, // 🔥 increase to 10 seconds
+});
 export const chatClient = StreamChat.getInstance(apiKey, apiSecret);
 
 export const upperStreamUser = async(userData) => {

@@ -20,8 +20,11 @@ export async function createSession(req, res) {
             problem,
             difficulty,
             host: userId,
-            callId
+            callId,
+            status: "active", // 🔥 ADD THIS
         });
+
+        const call = streamClient.video.call("default", callId);
 
         await streamClient.video.call("default", callId).getOrCreate({
             data: {
@@ -43,6 +46,8 @@ export async function createSession(req, res) {
         await channel.create();
 
         res.status(201).json({ session });
+        console.log("Creating Stream Call:", callId);
+        console.log("Call created successfully ✅");
 
     } catch (error) {
         console.error("error in createSession:", error);

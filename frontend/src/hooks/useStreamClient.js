@@ -5,80 +5,123 @@ import { initializeStreamClient, disconnectStreamClient } from "../lib/stream";
 import { sessionApi } from "../api/sessions";
 
 function useStreamClient(session, loadingSession, isHost, isParticipant) {
+  const [hasInitialized, setHasInitialized] = useState(false);
   const [streamClient, setStreamClient] = useState(null);
   const [call, setCall] = useState(null);
   const [chatClient, setChatClient] = useState(null);
   const [channel, setChannel] = useState(null);
   const [isInitializingCall, setIsInitializingCall] = useState(true);
 
-  useEffect(() => {
-    let videoCall = null;
-    let chatClientInstance = null;
+ useEffect(() => {
+  console.log("HOOK RUNNING 🔥", {
+    session,
+    loadingSession,
+    isHost,
+    isParticipant,
+    hasInitialized,
+  });
 
-    const initCall = async () => {
-      if (!session?.callId) return;
-      if (!isHost && !isParticipant) return;
-      if (session.status === "completed") return;
+  let videoCall = null;
+  let chatClientInstance = null;
 
+  const initCall = async () => {
+    console.log("INIT CALL STARTED 🔥");
+
+    try {
+      const { token, userId, userName, userImage } =
+        await sessionApi.getStreamToken();
+
+      const client = await initializeStreamClient(
+        {
+          id: userId,
+          name: userName,
+          image: userImage,
+        },
+        token
+      );
+
+      setStreamClient(client);
+
+      videoCall = client.call("default", session.callId);
+
+      console.log("Before join");
+
+      await videoCall.join({
+        create: isHost,
+        video: true,
+        audio: true,
+      });
+      const devices = await navigator.mediaDevices.enumerateDevices();
+
+const camera = devices.find(d => d.kind === "videoinput");
+
+if (camera) {
+  await videoCall.camera.select(camera.deviceId);
+  await videoCall.camera.enable();
+}
+
+      console.log("AFTER JOIN ✅");
+
+      setCall(videoCall);
+
+      videoCall.on("connection.changed", (e) => {
+        console.log("Connection state:", e);
+      });
+
+      // CHAT
+      const apiKey = import.meta.env.VITE_STREAM_API_KEY;
+      chatClientInstance = StreamChat.getInstance(apiKey);
+
+      await chatClientInstance.connectUser(
+        {
+          id: userId,
+          name: userName,
+          image: userImage,
+        },
+        token
+      );
+
+      setChatClient(chatClientInstance);
+
+      const chatChannel = chatClientInstance.channel(
+        "messaging",
+        session.callId
+      );
+
+      await chatChannel.watch();
+      setChannel(chatChannel);
+
+    } catch (error) {
+      console.error("❌ Error init call", error);
+    } finally {
+      setIsInitializingCall(false);
+    }
+  };
+
+  // ✅ SAFE GUARD FLOW
+  if (!session || loadingSession) return;
+  if (!session.callId) return;
+  if (hasInitialized) return; // 🔥 prevents loop
+
+  console.log("INIT TRIGGERED 🚀");
+
+  setHasInitialized(true); // 🔥 important
+  initCall();
+
+  return () => {
+    (async () => {
       try {
-        const { token, userId, userName, userImage } = await sessionApi.getStreamToken();
-
-        const client = await initializeStreamClient(
-          {
-            id: userId,
-            name: userName,
-            image: userImage,
-          },
-          token
-        );
-
-        setStreamClient(client);
-
-        videoCall = client.call("default", session.callId);
-        await videoCall.join({ create: true });
-        setCall(videoCall);
-
-        const apiKey = import.meta.env.VITE_STREAM_API_KEY;
-        chatClientInstance = StreamChat.getInstance(apiKey);
-
-        await chatClientInstance.connectUser(
-          {
-            id: userId,
-            name: userName,
-            image: userImage,
-          },
-          token
-        );
-        setChatClient(chatClientInstance);
-
-        const chatChannel = chatClientInstance.channel("messaging", session.callId);
-        await chatChannel.watch();
-        setChannel(chatChannel);
+        if (videoCall) await videoCall.leave();
+        if (chatClientInstance)
+          await chatClientInstance.disconnectUser();
+        await disconnectStreamClient();
       } catch (error) {
-        toast.error("Failed to join video call");
-        console.error("Error init call", error);
-      } finally {
-        setIsInitializingCall(false);
+        console.error("Cleanup error:", error);
       }
-    };
-
-    if (session && !loadingSession) initCall();
-
-    // cleanup - performance reasons
-    return () => {
-      // iife
-      (async () => {
-        try {
-          if (videoCall) await videoCall.leave();
-          if (chatClientInstance) await chatClientInstance.disconnectUser();
-          await disconnectStreamClient();
-        } catch (error) {
-          console.error("Cleanup error:", error);
-        }
-      })();
-    };
-  }, [session, loadingSession, isHost, isParticipant]);
-
+    })();
+  };
+}, [session?.callId, loadingSession, hasInitialized, isHost, isParticipant]);
+//session?.callId
   return {
     streamClient,
     call,
