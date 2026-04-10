@@ -1,10 +1,15 @@
 import axios from "axios"
 
 const axiosInstance = axios.create({
-    baseURL:"https://collab2-1.onrender.com/api",
-    withCredentials:true
-})
+  baseURL: "https://collab2-1.onrender.com/api",
+  withCredentials: true,
+});
 
-console.log("")
-
+// 🔥 prevent empty baseURL calls
+axiosInstance.interceptors.request.use((config) => {
+  if (!config.baseURL) {
+    console.error("❌ Missing baseURL!");
+  }
+  return config;
+});
 export default axiosInstance
