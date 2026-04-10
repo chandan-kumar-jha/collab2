@@ -1,4 +1,11 @@
 import mongoose from "mongoose"
+import { setServers } from "node:dns/promises"
+import dns from "node:dns"
+
+// ── DNS fix for Windows / IPv6 issues ─────────────────────────────
+setServers(["8.8.8.8", "8.8.4.4"])
+dns.setDefaultResultOrder("ipv4first")
+
 
 import{ENV} from "./env.js"
 

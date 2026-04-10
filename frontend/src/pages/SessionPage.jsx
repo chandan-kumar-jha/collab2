@@ -27,16 +27,21 @@ function SessionPage() {
   const joinSessionMutation = useJoinSession();
   const endSessionMutation = useEndSession();
 
-  const session = sessionData?.session;
+  const session = sessionData;
   const isHost = session?.host?.clerkId === user?.id;
   const isParticipant = session?.participant?.clerkId === user?.id;
+const streamData = useStreamClient(
+  session,
+  loadingSession,
+  isHost,
+  isParticipant
+);
 
-  const { call, channel, chatClient, isInitializingCall, streamClient } = useStreamClient(
-    session,
-    loadingSession,
-    isHost,
-    isParticipant
-  );
+const call = streamData?.call;
+const channel = streamData?.channel;
+const chatClient = streamData?.chatClient;
+const isInitializingCall = loadingSession || streamData?.isInitializingCall;
+const streamClient = streamData?.streamClient;
 
   // find the problem data based on session problem title
   const problemData = session?.problem
@@ -94,6 +99,15 @@ function SessionPage() {
       endSessionMutation.mutate(id, { onSuccess: () => navigate("/dashboard") });
     }
   };
+
+  console.log("SESSION DATA 🔥", sessionData);
+  console.log("USER ROLE 🔥", {
+  userId: user?.id,
+  hostId: session?.host?.clerkId,
+  participantId: session?.participant?.clerkId,
+  isHost,
+  isParticipant,
+});
 
   return (
     <div className="h-screen bg-base-100 flex flex-col">
@@ -257,7 +271,7 @@ function SessionPage() {
           {/* RIGHT PANEL - VIDEO CALLS & CHAT */}
           <Panel defaultSize={50} minSize={30}>
             <div className="h-full bg-base-200 p-4 overflow-auto">
-              {isInitializingCall ? (
+              {loadingSession || isInitializingCall ?(
                 <div className="h-full flex items-center justify-center">
                   <div className="text-center">
                     <Loader2Icon className="w-12 h-12 mx-auto animate-spin text-primary mb-4" />

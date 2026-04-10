@@ -26,7 +26,7 @@ app.use(cors({
 
   app.use("/api/inngest", serve({client: inngest, functions}))
   app.use("/api/chat", chatRoute)
-  app.use('/api/session', sessionRoutes)
+  app.use('/api/sessions', sessionRoutes)
 
 app.get("/hat", (req, res) => {
   res.status(200).json("hello hat");
