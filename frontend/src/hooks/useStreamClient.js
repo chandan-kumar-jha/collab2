@@ -2,207 +2,82 @@ import { useState, useEffect } from "react";
 import { StreamChat } from "stream-chat";
 import toast from "react-hot-toast";
 import { initializeStreamClient, disconnectStreamClient } from "../lib/stream";
-import { checkCameraPermission, requestMediaPermissions } from "../lib/mediaPermissions";
 import { sessionApi } from "../api/sessions";
 
 function useStreamClient(session, loadingSession, isHost, isParticipant) {
-  const [hasInitialized, setHasInitialized] = useState(false);
   const [streamClient, setStreamClient] = useState(null);
   const [call, setCall] = useState(null);
   const [chatClient, setChatClient] = useState(null);
   const [channel, setChannel] = useState(null);
   const [isInitializingCall, setIsInitializingCall] = useState(true);
-  const [videoAvailable, setVideoAvailable] = useState(false);
-  const [videoEnabled, setVideoEnabled] = useState(false);
-  const [isTogglingVideo, setIsTogglingVideo] = useState(false);
 
- useEffect(() => {
-  console.log("HOOK RUNNING 🔥", {
-    session,
-    loadingSession,
-    isHost,
-    isParticipant,
-    hasInitialized,
-  });
+  useEffect(() => {
+    let videoCall = null;
+    let chatClientInstance = null;
 
-  let videoCall = null;
-  let chatClientInstance = null;
+    const initCall = async () => {
+      if (!session?.callId) return;
+      if (!isHost && !isParticipant) return;
+      if (session.status === "completed") return;
 
-  const initCall = async () => {
-    console.log("INIT CALL STARTED 🔥");
-
-    try {
-      const { token, userId, userName, userImage } =
-        await sessionApi.getStreamToken();
-
-      const client = await initializeStreamClient(
-        {
-          id: userId,
-          name: userName,
-          image: userImage,
-        },
-        token
-      );
-
-      setStreamClient(client);
-
-      videoCall = client.call("default", session.callId);
-
-      console.log("Before join");
-
-      await videoCall.join({
-        create: isHost,
-        video: false, // Start with video disabled to avoid camera init failures
-        audio: true,
-      });
-
-      // Check for available video devices
       try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoCameras = devices.filter(d => d.kind === "videoinput");
-        
-        console.log(`Found ${videoCameras.length} video input device(s)`);
-        
-        if (videoCameras.length > 0) {
-          console.log("Video device available, starting with camera disabled by default");
-          setVideoAvailable(true);
-        } else {
-          console.warn("⚠️ No video devices detected on this system");
-          setVideoAvailable(false);
-        }
-      } catch (deviceError) {
-        console.warn("Failed to enumerate devices:", deviceError.message);
-        setVideoAvailable(false);
-      }
+        const { token, userId, userName, userImage } = await sessionApi.getStreamToken();
 
-      console.log("AFTER JOIN ✅");
+        const client = await initializeStreamClient(
+          {
+            id: userId,
+            name: userName,
+            image: userImage,
+          },
+          token
+        );
 
-      setCall(videoCall);
+        setStreamClient(client);
 
-      videoCall.on("connection.changed", (e) => {
-        console.log("Connection state:", e);
-      });
+        videoCall = client.call("default", session.callId);
+        await videoCall.join({ create: true });
+        setCall(videoCall);
 
-      // CHAT
-      const apiKey = import.meta.env.VITE_STREAM_API_KEY;
-      chatClientInstance = StreamChat.getInstance(apiKey);
+        const apiKey = import.meta.env.VITE_STREAM_API_KEY;
+        chatClientInstance = StreamChat.getInstance(apiKey);
 
-      await chatClientInstance.connectUser(
-        {
-          id: userId,
-          name: userName,
-          image: userImage,
-        },
-        token
-      );
+        await chatClientInstance.connectUser(
+          {
+            id: userId,
+            name: userName,
+            image: userImage,
+          },
+          token
+        );
+        setChatClient(chatClientInstance);
 
-      setChatClient(chatClientInstance);
-
-      const chatChannel = chatClientInstance.channel(
-        "messaging",
-        session.callId
-      );
-
-      await chatChannel.watch();
-      setChannel(chatChannel);
-
-    } catch (error) {
-      console.error("❌ Error init call", error);
-    } finally {
-      setIsInitializingCall(false);
-    }
-  };
-
-  // ✅ SAFE GUARD FLOW
-  if (!session || loadingSession) return;
-  if (!session.callId) return;
-  if (hasInitialized) return; // 🔥 prevents loop
-
-  console.log("INIT TRIGGERED 🚀");
-
-  setHasInitialized(true); // 🔥 important
-  initCall();
-
-  return () => {
-    (async () => {
-      try {
-        if (videoCall) await videoCall.leave();
-        if (chatClientInstance)
-          await chatClientInstance.disconnectUser();
-        await disconnectStreamClient();
+        const chatChannel = chatClientInstance.channel("messaging", session.callId);
+        await chatChannel.watch();
+        setChannel(chatChannel);
       } catch (error) {
-        console.error("Cleanup error:", error);
+        toast.error("Failed to join video call");
+        console.error("Error init call", error);
+      } finally {
+        setIsInitializingCall(false);
       }
-    })();
-  };
-}, [session?.callId, loadingSession, hasInitialized, isHost, isParticipant]);
+    };
 
-  const toggleVideo = async () => {
-    if (!call) {
-      toast.error("Call not initialized");
-      return;
-    }
+    if (session && !loadingSession) initCall();
 
-    if (isTogglingVideo) {
-      return;
-    }
-
-    setIsTogglingVideo(true);
-    
-    try {
-      if (videoEnabled) {
-        console.log("Disabling camera...");
-        await call.camera.disable();
-        setVideoEnabled(false);
-        toast.success("Camera disabled");
-      } else {
-        if (!videoAvailable) {
-          toast.error("No camera device found on this system");
-          return;
-        }
-
-        console.log("Attempting to enable camera as", isHost ? "host" : "participant");
-
-        const hasCameraPermission = await checkCameraPermission();
-        if (!hasCameraPermission) {
-          const granted = await requestMediaPermissions();
-          if (!granted) {
-            toast.error("Camera access denied - check browser permissions");
-            return;
-          }
-        }
-
+    // cleanup - performance reasons
+    return () => {
+      // iife
+      (async () => {
         try {
-          await call.camera.enable();
-          setVideoEnabled(true);
-          setVideoAvailable(true);
-          toast.success("Camera enabled!");
-        } catch (enableError) {
-          const errorMsg = enableError.message || "Camera enable failed";
-          console.warn("⚠️ Camera enable failed:", errorMsg);
-          
-          if (errorMsg.includes("permission") || errorMsg.includes("publish VIDEO")) {
-            toast.error(
-              isHost 
-                ? "Camera access denied - check browser permissions"
-                : "Participant camera access denied - contact host or check permissions"
-            );
-          } else if (errorMsg.includes("NotFound")) {
-            toast.error("No camera device found on this system");
-          } else if (errorMsg.includes("videoinput")) {
-            toast.error("No camera available");
-          } else {
-            toast.error("Could not enable camera: " + errorMsg);
-          }
+          if (videoCall) await videoCall.leave();
+          if (chatClientInstance) await chatClientInstance.disconnectUser();
+          await disconnectStreamClient();
+        } catch (error) {
+          console.error("Cleanup error:", error);
         }
-      }
-    } catch (error) {
-      console.error("Toggle video error:", error.message);
-      toast.error("Error toggling camera");
-    } finally {
-      setIsTogglingVideo(false);
-    }
-  };
+      })();
+    };
+  }, [session, loadingSession, isHost, isParticipant]);
 
   return {
     streamClient,
@@ -210,10 +85,6 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
     chatClient,
     channel,
     isInitializingCall,
-    videoAvailable,
-    videoEnabled,
-    isTogglingVideo,
-    toggleVideo,
   };
 }
 

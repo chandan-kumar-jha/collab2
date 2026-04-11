@@ -1,48 +1,46 @@
 import { Inngest } from "inngest";
-import { connectDb } from "./db.js";
+import  connectDB  from "./db.js";
 import User from "../models/User.js";
-import { deleteStreamUser, upperStreamUser } from "./stream.js";
+import { deleteStreamUser, upsertStreamUser } from "./stream.js";
 
-export const inngest = new Inngest({ id: "collab2" });
+export const inngest = new Inngest({ id: "talent-iq" });
 
 const syncUser = inngest.createFunction(
   { id: "sync-user" },
   { event: "clerk/user.created" },
   async ({ event }) => {
-    await connectDb();
+    await connectDB();
 
     const { id, email_addresses, first_name, last_name, image_url } = event.data;
 
-    const newuser = {
+    const newUser = {
       clerkId: id,
       email: email_addresses[0]?.email_address,
       name: `${first_name || ""} ${last_name || ""}`,
       profileImage: image_url,
     };
 
-    await User.create(newuser);
+    await User.create(newUser);
 
-    await upperStreamUser({
-      id: newuser.clerkId.toString(),
-      name: newuser.name,
-      image: newuser.profileImage
-    })
-
-    // send a welcome email here later  to user
+    await upsertStreamUser({
+      id: newUser.clerkId.toString(),
+      name: newUser.name,
+      image: newUser.profileImage,
+    });
   }
 );
 
-const deleteUserfromDb = inngest.createFunction(
+const deleteUserFromDB = inngest.createFunction(
   { id: "delete-user-from-db" },
   { event: "clerk/user.deleted" },
   async ({ event }) => {
-    await connectDb();
+    await connectDB();
 
     const { id } = event.data;
     await User.deleteOne({ clerkId: id });
 
-    await deleteStreamUser(id.toString())
+    await deleteStreamUser(id.toString());
   }
 );
 
-export const functions = [syncUser, deleteUserfromDb];
+export const functions = [syncUser, deleteUserFromDB];

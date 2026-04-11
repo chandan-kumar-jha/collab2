@@ -27,25 +27,16 @@ function SessionPage() {
   const joinSessionMutation = useJoinSession();
   const endSessionMutation = useEndSession();
 
-  const session = sessionData;
+  const session = sessionData?.session;
   const isHost = session?.host?.clerkId === user?.id;
   const isParticipant = session?.participant?.clerkId === user?.id;
-const streamData = useStreamClient(
-  session,
-  loadingSession,
-  isHost,
-  isParticipant
-);
 
-const call = streamData?.call;
-const channel = streamData?.channel;
-const chatClient = streamData?.chatClient;
-const isInitializingCall = loadingSession || streamData?.isInitializingCall;
-const streamClient = streamData?.streamClient;
-const videoAvailable = streamData?.videoAvailable;
-const videoEnabled = streamData?.videoEnabled;
-const isTogglingVideo = streamData?.isTogglingVideo;
-const toggleVideo = streamData?.toggleVideo;
+  const { call, channel, chatClient, isInitializingCall, streamClient } = useStreamClient(
+    session,
+    loadingSession,
+    isHost,
+    isParticipant
+  );
 
   // find the problem data based on session problem title
   const problemData = session?.problem
@@ -103,15 +94,6 @@ const toggleVideo = streamData?.toggleVideo;
       endSessionMutation.mutate(id, { onSuccess: () => navigate("/dashboard") });
     }
   };
-
-  console.log("SESSION DATA 🔥", sessionData);
-  console.log("USER ROLE 🔥", {
-  userId: user?.id,
-  hostId: session?.host?.clerkId,
-  participantId: session?.participant?.clerkId,
-  isHost,
-  isParticipant,
-});
 
   return (
     <div className="h-screen bg-base-100 flex flex-col">
@@ -275,7 +257,7 @@ const toggleVideo = streamData?.toggleVideo;
           {/* RIGHT PANEL - VIDEO CALLS & CHAT */}
           <Panel defaultSize={50} minSize={30}>
             <div className="h-full bg-base-200 p-4 overflow-auto">
-              {loadingSession || isInitializingCall ?(
+              {isInitializingCall ? (
                 <div className="h-full flex items-center justify-center">
                   <div className="text-center">
                     <Loader2Icon className="w-12 h-12 mx-auto animate-spin text-primary mb-4" />
@@ -298,14 +280,7 @@ const toggleVideo = streamData?.toggleVideo;
                 <div className="h-full">
                   <StreamVideo client={streamClient}>
                     <StreamCall call={call}>
-                      <VideoCallUI 
-                        chatClient={chatClient} 
-                        channel={channel}
-                        videoAvailable={videoAvailable}
-                        videoEnabled={videoEnabled}
-                        isTogglingVideo={isTogglingVideo}
-                        toggleVideo={toggleVideo}
-                      />
+                      <VideoCallUI chatClient={chatClient} channel={channel} />
                     </StreamCall>
                   </StreamVideo>
                 </div>
