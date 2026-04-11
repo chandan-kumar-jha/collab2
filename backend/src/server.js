@@ -64,20 +64,19 @@ app.use("/api/sessions", sessionRoutes);
 // 🌍 PRODUCTION FRONTEND SERVING (IMPORTANT)
 // ─────────────────────────────────────────────
 if (ENV.NODE_ENV === "production") {
-  const frontendPath = path.join(__dirname, "../frontend/dist");
+  const frontendPath = path.join(__dirname, "frontend/dist");
 
   console.log("📦 Serving frontend from:", frontendPath);
 
-  // serve static files
   app.use(express.static(frontendPath));
 
-  // SPA fallback (VERY IMPORTANT)
- app.use((req, res, next) => {
-  if (req.method === "GET" && !req.path.startsWith("/api")) {
-    return res.sendFile(path.join(frontendPath, "index.html"));
-  }
-  next();
-});}
+  app.use((req, res, next) => {
+    if (req.method === "GET" && !req.path.startsWith("/api")) {
+      return res.sendFile(path.join(frontendPath, "index.html"));
+    }
+    next();
+  });
+}
 
 // ─────────────────────────────────────────────
 // 🚀 START SERVER
