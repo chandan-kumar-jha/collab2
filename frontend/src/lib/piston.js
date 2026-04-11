@@ -1,6 +1,6 @@
 // Piston API is a service for code execution
 
-const PISTON_API = "https://emkc.org/api/v2/piston";
+const PISTON_API = "http://localhost:3000";
 
 const LANGUAGE_VERSIONS = {
   javascript: { language: "javascript", version: "18.15.0" },
@@ -50,9 +50,9 @@ export async function executeCode(language, code) {
 
     const data = await response.json();
 
-    const output = data.run.output || "";
-    const stderr = data.run.stderr || "";
-
+    const output = data?.run?.stdout || "";
+const stderr = data?.run?.stderr || "";
+console.log("FULL RESPONSE:", data);
     if (stderr) {
       return {
         success: false,

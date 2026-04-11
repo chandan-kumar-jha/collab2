@@ -43,7 +43,6 @@ function DashboardPage() {
 
   const isUserInSession = (session) => {
     if (!user.id) return false;
-
     return session.host?.clerkId === user.id || session.participant?.clerkId === user.id;
   };
 
@@ -54,8 +53,8 @@ function DashboardPage() {
         <WelcomeSection onCreateSession={() => setShowCreateModal(true)} />
 
         {/* Grid layout */}
-        <div className="container mx-auto px-6 pb-16">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="container mx-auto px-4 sm:px-6 pb-10 sm:pb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             <StatsCards
               activeSessionsCount={activeSessions.length}
               recentSessionsCount={recentSessions.length}

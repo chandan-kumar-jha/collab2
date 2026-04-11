@@ -4,16 +4,16 @@ import { formatDistanceToNow } from "date-fns";
 
 function RecentSessions({ sessions, isLoading }) {
   return (
-    <div className="card bg-base-100 border-2 border-accent/20 hover:border-accent/30 mt-8">
-      <div className="card-body">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-br from-accent to-secondary rounded-xl">
-            <Clock className="w-5 h-5 text-white" />
+    <div className="card bg-base-100 border-2 border-accent/20 hover:border-accent/30 mt-6 sm:mt-8">
+      <div className="card-body p-4 sm:p-6">
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <div className="p-2 bg-gradient-to-br from-accent to-secondary rounded-xl shrink-0">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
-          <h2 className="text-2xl font-black">Your Past Sessions</h2>
+          <h2 className="text-xl sm:text-2xl font-black">Your Past Sessions</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {isLoading ? (
             <div className="col-span-full flex items-center justify-center py-20">
               <Loader className="w-10 h-10 animate-spin text-primary" />
@@ -30,26 +30,26 @@ function RecentSessions({ sessions, isLoading }) {
               >
                 {session.status === "active" && (
                   <div className="absolute top-3 right-3">
-                    <div className="badge badge-success gap-1">
+                    <div className="badge badge-success badge-sm gap-1">
                       <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
                       ACTIVE
                     </div>
                   </div>
                 )}
 
-                <div className="card-body p-5">
-                  <div className="flex items-start gap-3 mb-4">
+                <div className="card-body p-4 sm:p-5">
+                  <div className="flex items-start gap-3 mb-3 sm:mb-4">
                     <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 ${
                         session.status === "active"
                           ? "bg-gradient-to-br from-success to-success/70"
                           : "bg-gradient-to-br from-primary to-secondary"
                       }`}
                     >
-                      <Code2 className="w-6 h-6 text-white" />
+                      <Code2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-base mb-1 truncate">{session.problem}</h3>
+                      <h3 className="font-bold text-sm sm:text-base mb-1 truncate pr-12">{session.problem}</h3>
                       <span
                         className={`badge badge-sm ${getDifficultyBadgeClass(session.difficulty)}`}
                       >
@@ -58,17 +58,17 @@ function RecentSessions({ sessions, isLoading }) {
                     </div>
                   </div>
 
-                  <div className="space-y-2 text-sm opacity-80 mb-4">
+                  <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm opacity-80 mb-3 sm:mb-4">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      <span>
+                      <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                      <span className="truncate">
                         {formatDistanceToNow(new Date(session.createdAt), {
                           addSuffix: true,
                         })}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4" />
+                      <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                       <span>
                         {session.participant ? "2" : "1"} participant
                         {session.participant ? "s" : ""}
@@ -76,7 +76,7 @@ function RecentSessions({ sessions, isLoading }) {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-base-300">
+                  <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-base-300">
                     <span className="text-xs font-semibold opacity-80 uppercase">Completed</span>
                     <span className="text-xs opacity-40">
                       {new Date(session.updatedAt).toLocaleDateString()}
@@ -86,11 +86,11 @@ function RecentSessions({ sessions, isLoading }) {
               </div>
             ))
           ) : (
-            <div className="col-span-full text-center py-16">
-              <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-accent/20 to-secondary/20 rounded-3xl flex items-center justify-center">
-                <Trophy className="w-10 h-10 text-accent/50" />
+            <div className="col-span-full text-center py-12 sm:py-16">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 bg-gradient-to-br from-accent/20 to-secondary/20 rounded-3xl flex items-center justify-center">
+                <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-accent/50" />
               </div>
-              <p className="text-lg font-semibold opacity-70 mb-1">No sessions yet</p>
+              <p className="text-base sm:text-lg font-semibold opacity-70 mb-1">No sessions yet</p>
               <p className="text-sm opacity-50">Start your coding journey today!</p>
             </div>
           )}
