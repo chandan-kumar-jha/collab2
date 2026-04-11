@@ -1,8 +1,13 @@
 import axios from "axios";
 
+const baseURL =
+  import.meta.env.MODE === "development"
+    ? "http://localhost:3000/api" // local backend
+    : "/api"; // production (same domain)
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true, // by adding this field browser will send the cookies to server automatically, on every single req
+  baseURL,
+  withCredentials: true,
 });
 
 export default axiosInstance;
