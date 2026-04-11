@@ -29,10 +29,10 @@ app.use(
 
         scriptSrc: [
           "'self'",
-          "'unsafe-inline'", // needed for some libs
+          "'unsafe-inline'",
+          "https://cdn.jsdelivr.net",
           "https://*.clerk.accounts.dev",
           "https://*.clerk.com",
-          "https://cdn.jsdelivr.net",
         ],
 
         connectSrc: [
@@ -40,21 +40,22 @@ app.use(
           "https://*.clerk.accounts.dev",
           "https://*.clerk.com",
           "https://clerk-telemetry.com",
-          "https://video.stream-io-api.com",
-          "wss://video.stream-io-api.com", // 🔥 IMPORTANT (WebSocket)
+          "https://*.stream-io-api.com",
+          "https://hint.stream-io-video.com",
+          "wss://video.stream-io-api.com",
         ],
 
-        imgSrc: ["'self'", "data:", "https:"],
+        imgSrc: ["'self'", "data:", "blob:"],
+
+        styleSrc: ["'self'", "'unsafe-inline'"],
+
+        workerSrc: ["'self'", "blob:"], // ✅ FIX MONACO
+
+        mediaSrc: ["'self'", "blob:"],
 
         frameSrc: [
           "'self'",
           "https://*.clerk.accounts.dev",
-          "https://*.clerk.com",
-        ],
-
-        styleSrc: [
-          "'self'",
-          "'unsafe-inline'",
         ],
       },
     },
