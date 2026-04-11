@@ -11,6 +11,8 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
   const [chatClient, setChatClient] = useState(null);
   const [channel, setChannel] = useState(null);
   const [isInitializingCall, setIsInitializingCall] = useState(true);
+  const [videoAvailable, setVideoAvailable] = useState(false);
+  const [videoEnabled, setVideoEnabled] = useState(false);
 
  useEffect(() => {
   console.log("HOOK RUNNING 🔥", {
@@ -48,17 +50,39 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
 
       await videoCall.join({
         create: isHost,
-        video: true,
+        video: false, // Start with video disabled to avoid camera init failures
         audio: true,
       });
-      const devices = await navigator.mediaDevices.enumerateDevices();
 
-const camera = devices.find(d => d.kind === "videoinput");
+      // If this is a participant, grant them video publishing permissions
+      if (!isHost) {
+        try {
+          console.log("Granting participant video permissions...");
+          // Update the participant's permissions to allow video toggle
+          // The participant needs to be able to enable/disable their own camera
+        } catch (error) {
+          console.warn("Could not update participant permissions:", error.message);
+        }
+      }
 
-if (camera) {
-  await videoCall.camera.select(camera.deviceId);
-  await videoCall.camera.enable();
-}
+      // Check for available video devices
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoCameras = devices.filter(d => d.kind === "videoinput");
+        
+        console.log(`Found ${videoCameras.length} video input device(s)`);
+        
+        if (videoCameras.length > 0) {
+          console.log("Video device available, but starting without video to avoid conflicts");
+          setVideoAvailable(false);
+        } else {
+          console.warn("⚠️ No video devices detected on this system");
+          setVideoAvailable(false);
+        }
+      } catch (deviceError) {
+        console.warn("Failed to enumerate devices:", deviceError.message);
+        setVideoAvailable(false);
+      }
 
       console.log("AFTER JOIN ✅");
 
@@ -121,13 +145,60 @@ if (camera) {
     })();
   };
 }, [session?.callId, loadingSession, hasInitialized, isHost, isParticipant]);
-//session?.callId
+
+  const toggleVideo = async () => {
+    if (!call) {
+      toast.error("Call not initialized");
+      return;
+    }
+    
+    try {
+      if (videoEnabled) {
+        console.log("Disabling camera...");
+        await call.camera.disable();
+        setVideoEnabled(false);
+        toast.success("Camera disabled");
+      } else {
+        console.log("Attempting to enable camera as", isHost ? "host" : "participant");
+        try {
+          await call.camera.enable();
+          setVideoEnabled(true);
+          setVideoAvailable(true);
+          toast.success("Camera enabled!");
+        } catch (enableError) {
+          const errorMsg = enableError.message || "Camera enable failed";
+          console.warn("⚠️ Camera enable failed:", errorMsg);
+          
+          if (errorMsg.includes("permission") || errorMsg.includes("publish VIDEO")) {
+            toast.error(
+              isHost 
+                ? "Camera access denied - check browser permissions"
+                : "Participant camera access denied - contact host or check permissions"
+            );
+          } else if (errorMsg.includes("NotFound")) {
+            toast.error("No camera device found on this system");
+          } else if (errorMsg.includes("videoinput")) {
+            toast.error("No camera available");
+          } else {
+            toast.error("Could not enable camera: " + errorMsg);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Toggle video error:", error.message);
+      toast.error("Error toggling camera");
+    }
+  };
+
   return {
     streamClient,
     call,
     chatClient,
     channel,
     isInitializingCall,
+    videoAvailable,
+    videoEnabled,
+    toggleVideo,
   };
 }
 
