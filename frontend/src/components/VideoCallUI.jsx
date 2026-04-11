@@ -3,11 +3,27 @@ import {
   CallingState,
   SpeakerLayout,
   useCallStateHooks,
+  ScreenShareButton, // 🔥 ADD THIS
 } from "@stream-io/video-react-sdk";
-import { Loader2Icon, MessageSquareIcon, UsersIcon, XIcon } from "lucide-react";
+
+import {
+  Loader2Icon,
+  MessageSquareIcon,
+  UsersIcon,
+  XIcon,
+} from "lucide-react";
+
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Channel, Chat, MessageInput, MessageList, Thread, Window } from "stream-chat-react";
+
+import {
+  Channel,
+  Chat,
+  MessageInput,
+  MessageList,
+  Thread,
+  Window,
+} from "stream-chat-react";
 
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 import "stream-chat-react/dist/css/v2/index.css";
@@ -15,9 +31,14 @@ import "stream-chat-react/dist/css/v2/index.css";
 function VideoCallUI({ chatClient, channel }) {
   const navigate = useNavigate();
   const { useCallCallingState, useParticipantCount } = useCallStateHooks();
+
   const callingState = useCallCallingState();
   const participantCount = useParticipantCount();
+
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // 🔥 Optional mobile check (prevents confusion)
+  const isMobile = /Android|iPhone/i.test(navigator.userAgent);
 
   if (callingState === CallingState.JOINING) {
     return (
@@ -33,18 +54,23 @@ function VideoCallUI({ chatClient, channel }) {
   return (
     <div className="h-full flex gap-3 relative str-video">
       <div className="flex-1 flex flex-col gap-3">
-        {/* Participants count badge and Chat Toggle */}
+        
+        {/* Participants + Chat Toggle */}
         <div className="flex items-center justify-between gap-2 bg-base-100 p-3 rounded-lg shadow">
           <div className="flex items-center gap-2">
             <UsersIcon className="w-5 h-5 text-primary" />
             <span className="font-semibold">
-              {participantCount} {participantCount === 1 ? "participant" : "participants"}
+              {participantCount}{" "}
+              {participantCount === 1 ? "participant" : "participants"}
             </span>
           </div>
+
           {chatClient && channel && (
             <button
               onClick={() => setIsChatOpen(!isChatOpen)}
-              className={`btn btn-sm gap-2 ${isChatOpen ? "btn-primary" : "btn-ghost"}`}
+              className={`btn btn-sm gap-2 ${
+                isChatOpen ? "btn-primary" : "btn-ghost"
+              }`}
               title={isChatOpen ? "Hide chat" : "Show chat"}
             >
               <MessageSquareIcon className="size-4" />
@@ -53,17 +79,24 @@ function VideoCallUI({ chatClient, channel }) {
           )}
         </div>
 
+        {/* VIDEO AREA */}
         <div className="flex-1 bg-base-300 rounded-lg overflow-hidden relative">
           <SpeakerLayout />
         </div>
 
-        <div className="bg-base-100 p-3 rounded-lg shadow flex justify-center">
+        {/* CONTROLS */}
+        <div className="bg-base-100 p-3 rounded-lg shadow flex justify-center gap-2">
+          
+          {/* Default controls */}
           <CallControls onLeave={() => navigate("/dashboard")} />
+
+          {/* 🔥 SCREEN SHARE BUTTON (FIX) */}
+          {!isMobile && <ScreenShareButton />}
+
         </div>
       </div>
 
       {/* CHAT SECTION */}
-
       {chatClient && channel && (
         <div
           className={`flex flex-col rounded-lg shadow overflow-hidden bg-[#272a30] transition-all duration-300 ease-in-out ${
@@ -82,6 +115,7 @@ function VideoCallUI({ chatClient, channel }) {
                   <XIcon className="size-5" />
                 </button>
               </div>
+
               <div className="flex-1 overflow-hidden stream-chat-dark">
                 <Chat client={chatClient} theme="str-chat__theme-dark">
                   <Channel channel={channel}>
@@ -100,4 +134,5 @@ function VideoCallUI({ chatClient, channel }) {
     </div>
   );
 }
+
 export default VideoCallUI;
