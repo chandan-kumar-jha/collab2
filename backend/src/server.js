@@ -3,7 +3,7 @@ import path from "path";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
-import helmet from "helmet";
+//import helmet from "helmet";
 
 import { serve } from "inngest/express";
 import { clerkMiddleware } from "@clerk/express";
@@ -21,46 +21,7 @@ const __dirname = path.resolve();
 // ─────────────────────────────────────────────
 // 🔐 MIDDLEWARE
 // ─────────────────────────────────────────────
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
 
-        scriptSrc: [
-          "'self'",
-          "'unsafe-inline'",
-          "https://cdn.jsdelivr.net",
-          "https://*.clerk.accounts.dev",
-          "https://*.clerk.com",
-        ],
-
-        connectSrc: [
-          "'self'",
-          "https://*.clerk.accounts.dev",
-          "https://*.clerk.com",
-          "https://clerk-telemetry.com",
-          "https://*.stream-io-api.com",
-          "https://hint.stream-io-video.com",
-          "wss://video.stream-io-api.com",
-        ],
-
-        imgSrc: ["'self'", "data:", "blob:"],
-
-        styleSrc: ["'self'", "'unsafe-inline'"],
-
-        workerSrc: ["'self'", "blob:"], // ✅ FIX MONACO
-
-        mediaSrc: ["'self'", "blob:"],
-
-        frameSrc: [
-          "'self'",
-          "https://*.clerk.accounts.dev",
-        ],
-      },
-    },
-  })
-);
 app.use(morgan(ENV.NODE_ENV === "production" ? "combined" : "dev"));
 
 app.use(express.json({ limit: "10kb" }));
