@@ -12,7 +12,7 @@ import { Channel, Chat, MessageInput, MessageList, Thread, Window } from "stream
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 import "stream-chat-react/dist/css/v2/index.css";
 
-function VideoCallUI({ chatClient, channel, videoAvailable, videoEnabled, toggleVideo }) {
+function VideoCallUI({ chatClient, channel, videoAvailable, videoEnabled, isTogglingVideo, toggleVideo }) {
   const navigate = useNavigate();
   const { useCallCallingState, useParticipantCount, useCallMembers } = useCallStateHooks();
   const callingState = useCallCallingState();
@@ -48,7 +48,7 @@ function VideoCallUI({ chatClient, channel, videoAvailable, videoEnabled, toggle
           <div className="flex items-center gap-2">
             <button
               onClick={toggleVideo}
-              disabled={!toggleVideo}
+              disabled={!toggleVideo || isTogglingVideo || !videoAvailable}
               className={`btn btn-sm gap-2 ${videoEnabled ? "btn-primary" : "btn-ghost"}`}
               title={videoEnabled ? "Disable camera" : "Enable camera"}
             >
@@ -83,8 +83,12 @@ function VideoCallUI({ chatClient, channel, videoAvailable, videoEnabled, toggle
               <div className="text-center space-y-4">
                 <VideoOffIcon className="w-16 h-16 mx-auto text-gray-400" />
                 <div>
-                  <p className="text-lg font-semibold text-gray-600">No Camera Available</p>
-                  <p className="text-sm text-gray-500 mt-1">Audio-only session active</p>
+                  <p className="text-lg font-semibold text-gray-600">
+                    {videoAvailable ? "Camera is off" : "No Camera Available"}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {videoAvailable ? "Enable your camera to appear in the call" : "Audio-only session active"}
+                  </p>
                   {videoAvailable && (
                     <p className="text-xs text-gray-400 mt-2">
                       {videoEnabled ? "Camera enabled" : "Try enabling camera above"}

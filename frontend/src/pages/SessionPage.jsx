@@ -44,6 +44,7 @@ const isInitializingCall = loadingSession || streamData?.isInitializingCall;
 const streamClient = streamData?.streamClient;
 const videoAvailable = streamData?.videoAvailable;
 const videoEnabled = streamData?.videoEnabled;
+const isTogglingVideo = streamData?.isTogglingVideo;
 const toggleVideo = streamData?.toggleVideo;
 
   // find the problem data based on session problem title
@@ -302,6 +303,7 @@ const toggleVideo = streamData?.toggleVideo;
                         channel={channel}
                         videoAvailable={videoAvailable}
                         videoEnabled={videoEnabled}
+                        isTogglingVideo={isTogglingVideo}
                         toggleVideo={toggleVideo}
                       />
                     </StreamCall>

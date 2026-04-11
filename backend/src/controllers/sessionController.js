@@ -24,11 +24,15 @@ export async function createSession(req, res) {
             status: "active", // 🔥 ADD THIS
         });
 
-        const call = streamClient.video.call("default", callId);
-
         await streamClient.video.call("default", callId).getOrCreate({
             data: {
                 created_by_id: clerkId,
+                members: [
+                    {
+                        user_id: clerkId,
+                        role: "host",
+                    },
+                ],
                 custom: {
                     problem,
                     difficulty,
@@ -156,7 +160,12 @@ export async function joinSession(req, res) {
         // Add participant to the video call
         const call = streamClient.video.call("default", session.callId);
         try {
-            await call.addMembers([{ user_id: clerkId }]);
+            await call.addMembers([
+                {
+                    user_id: clerkId,
+                    role: "user",
+                },
+            ]);
             console.log(`Participant ${clerkId} added to video call`);
         } catch (callError) {
             console.warn("Could not add participant to call:", callError.message);
