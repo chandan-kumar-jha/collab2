@@ -26,21 +26,35 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
+
         scriptSrc: [
           "'self'",
+          "'unsafe-inline'", // needed for some libs
           "https://*.clerk.accounts.dev",
           "https://*.clerk.com",
+          "https://cdn.jsdelivr.net",
         ],
+
         connectSrc: [
           "'self'",
           "https://*.clerk.accounts.dev",
           "https://*.clerk.com",
+          "https://clerk-telemetry.com",
+          "https://video.stream-io-api.com",
+          "wss://video.stream-io-api.com", // 🔥 IMPORTANT (WebSocket)
         ],
+
         imgSrc: ["'self'", "data:", "https:"],
+
         frameSrc: [
           "'self'",
           "https://*.clerk.accounts.dev",
           "https://*.clerk.com",
+        ],
+
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
         ],
       },
     },
