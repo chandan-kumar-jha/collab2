@@ -153,6 +153,15 @@ export async function joinSession(req, res) {
         session.participant = userId;
         await session.save();
 
+        // Add participant to the video call
+        const call = streamClient.video.call("default", session.callId);
+        try {
+            await call.addMembers([{ user_id: clerkId }]);
+            console.log(`Participant ${clerkId} added to video call`);
+        } catch (callError) {
+            console.warn("Could not add participant to call:", callError.message);
+        }
+
         const channel = chatClient.channel("messaging", session.callId);
         await channel.addMembers([clerkId]);
 

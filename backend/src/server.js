@@ -19,9 +19,23 @@ const __dirname = path.resolve();
 app.use(express.json())
 
 app.use(cors({
-  origin:ENV.CLIENT_URL,
-   credentials:true
-  }))
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      ENV.CLIENT_URL,
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:3000'
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}))
   app.use(clerkMiddleware())
 
   app.use("/api/inngest", serve({client: inngest, functions}))

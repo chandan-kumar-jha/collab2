@@ -42,6 +42,9 @@ const channel = streamData?.channel;
 const chatClient = streamData?.chatClient;
 const isInitializingCall = loadingSession || streamData?.isInitializingCall;
 const streamClient = streamData?.streamClient;
+const videoAvailable = streamData?.videoAvailable;
+const videoEnabled = streamData?.videoEnabled;
+const toggleVideo = streamData?.toggleVideo;
 
   // find the problem data based on session problem title
   const problemData = session?.problem
@@ -294,7 +297,13 @@ const streamClient = streamData?.streamClient;
                 <div className="h-full">
                   <StreamVideo client={streamClient}>
                     <StreamCall call={call}>
-                      <VideoCallUI chatClient={chatClient} channel={channel} />
+                      <VideoCallUI 
+                        chatClient={chatClient} 
+                        channel={channel}
+                        videoAvailable={videoAvailable}
+                        videoEnabled={videoEnabled}
+                        toggleVideo={toggleVideo}
+                      />
                     </StreamCall>
                   </StreamVideo>
                 </div>

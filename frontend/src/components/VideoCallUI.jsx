@@ -4,7 +4,7 @@ import {
   SpeakerLayout,
   useCallStateHooks,
 } from "@stream-io/video-react-sdk";
-import { Loader2Icon, MessageSquareIcon, UsersIcon, XIcon } from "lucide-react";
+import { Loader2Icon, MessageSquareIcon, UsersIcon, XIcon, VideoOffIcon, VideoIcon } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Channel, Chat, MessageInput, MessageList, Thread, Window } from "stream-chat-react";
@@ -12,11 +12,12 @@ import { Channel, Chat, MessageInput, MessageList, Thread, Window } from "stream
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 import "stream-chat-react/dist/css/v2/index.css";
 
-function VideoCallUI({ chatClient, channel }) {
+function VideoCallUI({ chatClient, channel, videoAvailable, videoEnabled, toggleVideo }) {
   const navigate = useNavigate();
-  const { useCallCallingState, useParticipantCount } = useCallStateHooks();
+  const { useCallCallingState, useParticipantCount, useCallMembers } = useCallStateHooks();
   const callingState = useCallCallingState();
   const participantCount = useParticipantCount();
+  const members = useCallMembers();
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   if (callingState === CallingState.JOINING) {
@@ -30,6 +31,9 @@ function VideoCallUI({ chatClient, channel }) {
     );
   }
 
+  // Check if any participant has video disabled
+  const allVideoDisabled = members.every(m => !m.videoStream);
+
   return (
     <div className="h-full flex gap-3 relative str-video">
       <div className="flex-1 flex flex-col gap-3">
@@ -41,19 +45,55 @@ function VideoCallUI({ chatClient, channel }) {
               {participantCount} {participantCount === 1 ? "participant" : "participants"}
             </span>
           </div>
-          {chatClient && channel && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setIsChatOpen(!isChatOpen)}
-              className={`btn btn-sm gap-2 ${isChatOpen ? "btn-primary" : "btn-ghost"}`}
-              title={isChatOpen ? "Hide chat" : "Show chat"}
+              onClick={toggleVideo}
+              disabled={!toggleVideo}
+              className={`btn btn-sm gap-2 ${videoEnabled ? "btn-primary" : "btn-ghost"}`}
+              title={videoEnabled ? "Disable camera" : "Enable camera"}
             >
-              <MessageSquareIcon className="size-4" />
-              Chat
+              {videoEnabled ? (
+                <>
+                  <VideoIcon className="size-4" />
+                  Camera On
+                </>
+              ) : (
+                <>
+                  <VideoOffIcon className="size-4" />
+                  Camera Off
+                </>
+              )}
             </button>
-          )}
+            {chatClient && channel && (
+              <button
+                onClick={() => setIsChatOpen(!isChatOpen)}
+                className={`btn btn-sm gap-2 ${isChatOpen ? "btn-primary" : "btn-ghost"}`}
+                title={isChatOpen ? "Hide chat" : "Show chat"}
+              >
+                <MessageSquareIcon className="size-4" />
+                Chat
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 bg-base-300 rounded-lg overflow-hidden relative">
+          {allVideoDisabled && !videoEnabled && (
+            <div className="absolute inset-0 flex items-center justify-center bg-base-300 z-20">
+              <div className="text-center space-y-4">
+                <VideoOffIcon className="w-16 h-16 mx-auto text-gray-400" />
+                <div>
+                  <p className="text-lg font-semibold text-gray-600">No Camera Available</p>
+                  <p className="text-sm text-gray-500 mt-1">Audio-only session active</p>
+                  {videoAvailable && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      {videoEnabled ? "Camera enabled" : "Try enabling camera above"}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           <SpeakerLayout />
         </div>
 

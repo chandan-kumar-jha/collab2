@@ -1,4 +1,4 @@
-import { streamClient } from "../lib/stream.js";
+import { streamClient, chatClient } from "../lib/stream.js";
 
 export async function getStreamToken(req, res) {
   try {
@@ -8,7 +8,7 @@ export async function getStreamToken(req, res) {
       return res.status(400).json({ message: "User not authenticated" });
     }
 
-    const token = streamClient.createToken(clerkId); // ✅ FIXED
+    const token = chatClient.createToken(clerkId);
 
     res.status(200).json({
       token,
