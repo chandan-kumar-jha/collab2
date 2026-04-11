@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { StreamChat } from "stream-chat";
 import toast from "react-hot-toast";
 import { initializeStreamClient, disconnectStreamClient } from "../lib/stream";
+import { checkCameraPermission, requestMediaPermissions } from "../lib/mediaPermissions";
 import { sessionApi } from "../api/sessions";
 
 function useStreamClient(session, loadingSession, isHost, isParticipant) {
@@ -13,6 +14,7 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
   const [isInitializingCall, setIsInitializingCall] = useState(true);
   const [videoAvailable, setVideoAvailable] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(false);
+  const [isTogglingVideo, setIsTogglingVideo] = useState(false);
 
  useEffect(() => {
   console.log("HOOK RUNNING 🔥", {
@@ -54,17 +56,6 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
         audio: true,
       });
 
-      // If this is a participant, grant them video publishing permissions
-      if (!isHost) {
-        try {
-          console.log("Granting participant video permissions...");
-          // Update the participant's permissions to allow video toggle
-          // The participant needs to be able to enable/disable their own camera
-        } catch (error) {
-          console.warn("Could not update participant permissions:", error.message);
-        }
-      }
-
       // Check for available video devices
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -73,8 +64,8 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
         console.log(`Found ${videoCameras.length} video input device(s)`);
         
         if (videoCameras.length > 0) {
-          console.log("Video device available, but starting without video to avoid conflicts");
-          setVideoAvailable(false);
+          console.log("Video device available, starting with camera disabled by default");
+          setVideoAvailable(true);
         } else {
           console.warn("⚠️ No video devices detected on this system");
           setVideoAvailable(false);
@@ -151,6 +142,12 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
       toast.error("Call not initialized");
       return;
     }
+
+    if (isTogglingVideo) {
+      return;
+    }
+
+    setIsTogglingVideo(true);
     
     try {
       if (videoEnabled) {
@@ -159,7 +156,22 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
         setVideoEnabled(false);
         toast.success("Camera disabled");
       } else {
+        if (!videoAvailable) {
+          toast.error("No camera device found on this system");
+          return;
+        }
+
         console.log("Attempting to enable camera as", isHost ? "host" : "participant");
+
+        const hasCameraPermission = await checkCameraPermission();
+        if (!hasCameraPermission) {
+          const granted = await requestMediaPermissions();
+          if (!granted) {
+            toast.error("Camera access denied - check browser permissions");
+            return;
+          }
+        }
+
         try {
           await call.camera.enable();
           setVideoEnabled(true);
@@ -187,6 +199,8 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
     } catch (error) {
       console.error("Toggle video error:", error.message);
       toast.error("Error toggling camera");
+    } finally {
+      setIsTogglingVideo(false);
     }
   };
 
@@ -198,6 +212,7 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
     isInitializingCall,
     videoAvailable,
     videoEnabled,
+    isTogglingVideo,
     toggleVideo,
   };
 }
