@@ -72,18 +72,12 @@ if (ENV.NODE_ENV === "production") {
   app.use(express.static(frontendPath));
 
   // SPA fallback (VERY IMPORTANT)
-  app.get("*", (req, res) => {
-    if (!req.path.startsWith("/api") && req.method === "GET") {
-      return res.sendFile(path.join(frontendPath, "index.html"));
-    }
-    res.status(404).json({ message: "API route not found" });
-  });
-} else {
-  // dev fallback
-  app.use((req, res) => {
-    res.status(404).json({ message: "Route not found" });
-  });
-}
+ app.use((req, res, next) => {
+  if (req.method === "GET" && !req.path.startsWith("/api")) {
+    return res.sendFile(path.join(frontendPath, "index.html"));
+  }
+  next();
+});}
 
 // ─────────────────────────────────────────────
 // 🚀 START SERVER
