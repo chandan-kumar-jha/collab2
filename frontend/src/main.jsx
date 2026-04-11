@@ -17,7 +17,15 @@ if (!PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key')
 }
 
+
 import App from './App.jsx'
+
+import axios from "axios";
+
+axios.interceptors.request.use((config) => {
+  console.log("❌ RAW AXIOS USED:", config.url);
+  return config;
+});
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
