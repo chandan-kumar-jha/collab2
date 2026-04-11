@@ -1,13 +1,13 @@
 import axios from "axios";
 
-const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://collab2-1.onrender.com/api",
-  withCredentials: true,
-});
+const baseURL =
+  import.meta.env.MODE === "development"
+    ? "http://localhost:3000/api" // local backend
+    : "/api"; // production (same domain)
 
-axiosInstance.interceptors.request.use((config) => {
-  console.log("✅ AXIOS INSTANCE HIT:", config.baseURL + config.url);
-  return config;
+const axiosInstance = axios.create({
+  baseURL,
+  withCredentials: true,
 });
 
 export default axiosInstance;

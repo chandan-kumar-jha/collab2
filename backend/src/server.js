@@ -1,77 +1,104 @@
 import express from "express";
-import { ENV } from "./lib/env.js";
 import path from "path";
-import { connectDb } from "./lib/db.js";
-import {clerkMiddleware} from '@clerk/express'
-import cors from 'cors'
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import morgan from "morgan";
+import helmet from "helmet";
+
 import { serve } from "inngest/express";
-import { functions, inngest } from "./lib/inngest.js";
-import { protectRoute } from "./middleware/protectRoute.js";
-import chatRoute from './routes/chatRoutes.js'
-import sessionRoutes from './routes/sessionRoutes.js'
+import { clerkMiddleware } from "@clerk/express";
+
+import { ENV } from "./lib/env.js";
+import connectDB from "./lib/db.js";
+import { inngest, functions } from "./lib/inngest.js";
+
+import chatRoutes from "./routes/chatRoutes.js";
+import sessionRoutes from "./routes/sessionRoute.js";
 
 const app = express();
-
 const __dirname = path.resolve();
 
+// ─────────────────────────────────────────────
+// 🔐 MIDDLEWARE
+// ─────────────────────────────────────────────
+app.use(helmet());
+app.use(morgan(ENV.NODE_ENV === "production" ? "combined" : "dev"));
 
-//middleware
-app.use(express.json())
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      ENV.CLIENT_URL,
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://127.0.0.1:5173',
-      'http://127.0.0.1:3000'
-    ];
-    
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-}))
-  app.use(clerkMiddleware())
+// ✅ CORS (only needed in dev)
+app.use(
+  cors({
+    origin:
+      ENV.NODE_ENV === "production"
+        ? true // same origin in production
+        : ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 
-  app.use("/api/inngest", serve({client: inngest, functions}))
-  app.use("/api/chat", chatRoute)
-  app.use('/api/sessions', sessionRoutes)
+// ✅ Clerk auth
+app.use(clerkMiddleware());
 
-app.get("/hat", (req, res) => {
-  res.status(200).json("hello hat");
+// ─────────────────────────────────────────────
+// 🧠 HEALTH CHECK
+// ─────────────────────────────────────────────
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "API is running 🚀",
+    env: ENV.NODE_ENV,
+  });
 });
 
-app.get("/books", (req, res) => {
-  req.auth;
-  res.status(200).json("hello books");
-});
+// ─────────────────────────────────────────────
+// ⚡ API ROUTES
+// ─────────────────────────────────────────────
+app.use("/api/inngest", serve({ client: inngest, functions }));
+app.use("/api/chat", chatRoutes);
+app.use("/api/sessions", sessionRoutes);
 
-app.get("/video-calls",protectRoute, (req, res) => {
-  res.status(200).json("hello vide0");
-});
-
+// ─────────────────────────────────────────────
+// 🌍 PRODUCTION FRONTEND SERVING (IMPORTANT)
+// ─────────────────────────────────────────────
 if (ENV.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  const frontendPath = path.join(__dirname, "../frontend/dist");
 
-  // ⬇ FIX: RegExp fallback route
-  app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+  console.log("📦 Serving frontend from:", frontendPath);
+
+  // serve static files
+  app.use(express.static(frontendPath));
+
+  // SPA fallback (VERY IMPORTANT)
+  app.get("*", (req, res) => {
+    if (!req.path.startsWith("/api") && req.method === "GET") {
+      return res.sendFile(path.join(frontendPath, "index.html"));
+    }
+    res.status(404).json({ message: "API route not found" });
+  });
+} else {
+  // dev fallback
+  app.use((req, res) => {
+    res.status(404).json({ message: "Route not found" });
   });
 }
 
+// ─────────────────────────────────────────────
+// 🚀 START SERVER
+// ─────────────────────────────────────────────
 const startServer = async () => {
   try {
-    await connectDb();
+    await connectDB();
+
     app.listen(ENV.PORT, () => {
-      console.log(`server ${ENV.PORT}`);
+      console.log(`🚀 Server running on http://localhost:${ENV.PORT}`);
+      console.log(`🌍 Environment: ${ENV.NODE_ENV}`);
     });
   } catch (error) {
-    console.error("💥error in starting server", error);
+    console.error("❌ Server start failed:", error);
+    process.exit(1);
   }
 };
 

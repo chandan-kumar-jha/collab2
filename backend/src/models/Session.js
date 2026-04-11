@@ -24,15 +24,17 @@ const sessionSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["active", "completed"],
-      default: "active", // ✅ FIXED
+      default: "active",
     },
+    // stream video call ID
     callId: {
       type: String,
       default: "",
     },
   },
-  { timestamps: true } // ✅ IMPORTANT
+  { timestamps: true }
 );
 
 const Session = mongoose.model("Session", sessionSchema);
+
 export default Session;

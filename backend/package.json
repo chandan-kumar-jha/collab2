@@ -15,11 +15,14 @@
     "@clerk/express": "^1.7.41",
     "@stream-io/node-sdk": "^0.7.12",
     "collab2": "file:..",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "helmet": "^8.1.0",
     "inngest": "^3.44.3",
     "mongoose": "^8.19.1",
+    "morgan": "^1.10.1",
     "stream-chat": "^9.24.0"
   }
 }
