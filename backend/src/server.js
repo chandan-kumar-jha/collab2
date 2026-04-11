@@ -21,7 +21,31 @@ const __dirname = path.resolve();
 // ─────────────────────────────────────────────
 // 🔐 MIDDLEWARE
 // ─────────────────────────────────────────────
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "https://*.clerk.accounts.dev",
+          "https://*.clerk.com",
+        ],
+        connectSrc: [
+          "'self'",
+          "https://*.clerk.accounts.dev",
+          "https://*.clerk.com",
+        ],
+        imgSrc: ["'self'", "data:", "https:"],
+        frameSrc: [
+          "'self'",
+          "https://*.clerk.accounts.dev",
+          "https://*.clerk.com",
+        ],
+      },
+    },
+  })
+);
 app.use(morgan(ENV.NODE_ENV === "production" ? "combined" : "dev"));
 
 app.use(express.json({ limit: "10kb" }));
