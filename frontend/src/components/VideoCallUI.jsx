@@ -3,7 +3,7 @@ import {
   CallingState,
   SpeakerLayout,
   useCallStateHooks,
-  ScreenShareButton, // 🔥 ADD THIS
+  ScreenShareButton,
 } from "@stream-io/video-react-sdk";
 
 import {
@@ -37,29 +37,28 @@ function VideoCallUI({ chatClient, channel }) {
 
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // 🔥 Optional mobile check (prevents confusion)
   const isMobile = /Android|iPhone/i.test(navigator.userAgent);
 
   if (callingState === CallingState.JOINING) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
-          <Loader2Icon className="w-12 h-12 mx-auto animate-spin text-primary mb-4" />
-          <p className="text-lg">Joining call...</p>
+          <Loader2Icon className="w-10 h-10 sm:w-12 sm:h-12 mx-auto animate-spin text-primary mb-4" />
+          <p className="text-base sm:text-lg">Joining call...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex gap-3 relative str-video">
-      <div className="flex-1 flex flex-col gap-3">
-        
+    <div className="h-full flex flex-col md:flex-row gap-2 sm:gap-3 relative str-video">
+      <div className="flex-1 flex flex-col gap-2 sm:gap-3 min-h-0 min-w-0">
+
         {/* Participants + Chat Toggle */}
-        <div className="flex items-center justify-between gap-2 bg-base-100 p-3 rounded-lg shadow">
+        <div className="flex items-center justify-between gap-2 bg-base-100 px-3 py-2 sm:p-3 rounded-lg shadow shrink-0">
           <div className="flex items-center gap-2">
-            <UsersIcon className="w-5 h-5 text-primary" />
-            <span className="font-semibold">
+            <UsersIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
+            <span className="font-semibold text-sm sm:text-base">
               {participantCount}{" "}
               {participantCount === 1 ? "participant" : "participants"}
             </span>
@@ -68,55 +67,52 @@ function VideoCallUI({ chatClient, channel }) {
           {chatClient && channel && (
             <button
               onClick={() => setIsChatOpen(!isChatOpen)}
-              className={`btn btn-sm gap-2 ${
+              className={`btn btn-xs sm:btn-sm gap-1.5 sm:gap-2 ${
                 isChatOpen ? "btn-primary" : "btn-ghost"
               }`}
               title={isChatOpen ? "Hide chat" : "Show chat"}
             >
-              <MessageSquareIcon className="size-4" />
-              Chat
+              <MessageSquareIcon className="size-3.5 sm:size-4" />
+              <span className="hidden xs:inline">Chat</span>
             </button>
           )}
         </div>
 
         {/* VIDEO AREA */}
-        <div className="flex-1 bg-base-300 rounded-lg overflow-hidden relative">
+        <div className="flex-1 bg-base-300 rounded-lg overflow-hidden relative min-h-0">
           <SpeakerLayout />
         </div>
 
         {/* CONTROLS */}
-        <div className="bg-base-100 p-3 rounded-lg shadow flex justify-center gap-2">
-          
-          {/* Default controls */}
+        <div className="bg-base-100 px-2 py-2 sm:p-3 rounded-lg shadow flex justify-center gap-2 shrink-0 flex-wrap">
           <CallControls onLeave={() => navigate("/dashboard")} />
-
-          {/* 🔥 SCREEN SHARE BUTTON (FIX) */}
           {!isMobile && <ScreenShareButton />}
-
         </div>
       </div>
 
       {/* CHAT SECTION */}
       {chatClient && channel && (
         <div
-          className={`flex flex-col rounded-lg shadow overflow-hidden bg-[#272a30] transition-all duration-300 ease-in-out ${
-            isChatOpen ? "w-80 opacity-100" : "w-0 opacity-0"
-          }`}
+          className={`flex flex-col rounded-lg shadow overflow-hidden bg-[#272a30] transition-all duration-300 ease-in-out shrink-0
+            ${isChatOpen
+              ? "h-64 md:h-auto md:w-72 lg:w-80 opacity-100"
+              : "h-0 md:w-0 opacity-0 pointer-events-none"
+            }`}
         >
           {isChatOpen && (
             <>
-              <div className="bg-[#1c1e22] p-3 border-b border-[#3a3d44] flex items-center justify-between">
-                <h3 className="font-semibold text-white">Session Chat</h3>
+              <div className="bg-[#1c1e22] px-3 py-2 sm:p-3 border-b border-[#3a3d44] flex items-center justify-between shrink-0">
+                <h3 className="font-semibold text-white text-sm sm:text-base">Session Chat</h3>
                 <button
                   onClick={() => setIsChatOpen(false)}
                   className="text-gray-400 hover:text-white transition-colors"
                   title="Close chat"
                 >
-                  <XIcon className="size-5" />
+                  <XIcon className="size-4 sm:size-5" />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-hidden stream-chat-dark">
+              <div className="flex-1 overflow-hidden stream-chat-dark min-h-0">
                 <Chat client={chatClient} theme="str-chat__theme-dark">
                   <Channel channel={channel}>
                     <Window>
